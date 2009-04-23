@@ -12,7 +12,9 @@
 # author_email: chrysn@fsfe.org
 # url: non yet
 # [capabilities]
-# tabs: construct_tab
+# enablables: on_enable
+# tabs: instance.construct_tab
+# playing_song_observers: instance.on_change_song
 ### END PLUGIN INFO
 
 # maybe we should not have capabilities, but just specify the
@@ -67,24 +69,21 @@ def get_hyperlink(o, label):
 
 
 ############################################# the plugin
-class MusicBrainzPlugin(object):
+
+instance = None
+
+# this gets called when the plugin is loaded, enabled, or disabled:
+def on_enable(state):
+	global instance
+	if state:
+		instance = MusicBrainz()
+	else:
+		instance = None
+
+class MusicBrainz(object):
     ############################### initialization
     def __init__(self):
-        self._hook_up_on_change_song()
-
-    def _hook_up_on_change_song(self):
-        # FIXME: hack. moreover, exceptions might stop artwork from being
-        # updated.
-        # there should just be a hook called every time a new song is "made
-        # active" (played or newly shown as paused at startup).
-        # currently hooked to artwork_update because that's what changes
-        # exactly when the song changes and is simple to hook to
-        import sonata.artwork
-
-        def new_update(inner_self, force=False, old_function=sonata.artwork.Artwork.artwork_update):
-            self.on_change_song(inner_self.songinfo)
-            old_function(inner_self, force)
-        sonata.artwork.Artwork.artwork_update = new_update
+        pass
 
     ############################### hooks
     def construct_tab(self):
@@ -201,10 +200,3 @@ class MusicBrainzPlugin(object):
 
     def on_link_clicked(self, widget, url):
         webbrowser.open(url)
-
-
-def construct_tab():
-    # if i registered to more hooks, i'd have to make sure this is a single
-    # instance.
-    p = MusicBrainzPlugin()
-    return p.construct_tab()
